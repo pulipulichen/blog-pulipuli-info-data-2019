@@ -1,16 +1,403 @@
-<!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
-<html>
-  <head>
-    <title>TODO supply a title</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  </head>
-  <body>
-    <div>TODO write content</div>
-  </body>
-</html>
+<p><a href="//lh3.googleusercontent.com/--DJ0u8Johgk/Wm2LU3JWZUI/AAAAAAADock/HAz1lEJshqcfbtvAgGgCjCdqnHWvFXmKQCHMYCw/s1600/image%255B48%255D" class=""><img alt="image" border="0" height="518" src="//lh3.googleusercontent.com/-rJ-frEneMIU/Wm2LXeXQMQI/AAAAAAADoco/z5GJSoW0gMU2RMSv6oEUJD-njR-T0AFugCHMYCw/image_thumb%255B16%255D?imgmax=800" style="display: inline; background-image: none;" title="image" width="1033"></a></p>
+<p>很多時候我們研究的資料不一定符合常態分佈，例如車禍數量的趨勢符合<a href="https://www.wikiwand.com/zh/%E6%B3%8A%E6%9D%BE%E5%88%86%E4%BD%88">泊松分佈(Poisson distribution)</a>、產品的生命週期符合<a href="https://www.wikiwand.com/zh/%E9%9F%A6%E4%BC%AF%E5%88%86%E5%B8%83">韋伯分佈(Weibull distribution)</a>，甚至是健康、教育和社會科學中最常見的出現次數(frequency of appearance)這種研究資料都不是常態分佈(請見<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5603665/">Bono等人在2017年的回顧文章</a>)。</p>
+<p>當要比較的多組資料為常態分佈時，我們可以用<a href="http://blog.pulipuli.info/2017/10/spss-one-way-anova-in-spss.html">單因子變異數(one-way ANOVA)</a>。但若多組資料並非常態分佈時，我們則要使用中位數的ANOVA：Kruskal–Wallis檢定以及事後比較Dunn檢定。而若各組資料之間變異數不同質時，則要用Welch's anova跟事後比較Games-Howell檢定。</p>
+<p>為了方便使用，我將多組非常態分佈資料檢定的方法以R撰寫成一個腳本<a href="https://pulipulichen.github.io/blog-pulipuli-info-data-2018/01/Non-Parametric Tests for Comparing Many Non-normal Distribution Groups.R">Non-Parametric Tests for Comparing Many Non-normal Distribution Groups.R</a>供大家使用。以下將介紹如何使用這個腳本來進行多組非常態分佈的差異檢定。</p> <a name="more"></a>
+<h4>非常態分佈的資料 / Non-normal distribution data</h4>
+<p>在健康、教育和社會科學等領域的研究中所蒐集的資料，很多時候都是非常態分佈。<a href="https://www.qualitydigest.com/magazine/1999/dec/article/non-normal-distributions-real-world.html">Non-Normal Distributions in the Real World</a>介紹了非常態分佈的常見資料，像是人類的行為模式，例如收到發貨單跟付款之間的差距天數，或是受到物理法則影響的資料，像是鍍鋅厚度的分佈。</p>
+<p><a href="http://www.psychwiki.com/wiki/How_do_I_determine_whether_my_data_are_normal%3F">How do I determine whether my data are normal?</a>這篇講述了四種判斷資料是否為常態分佈的方法，摘要如下：</p>
+<ul>
+  <li>觀察疊加了常態分佈曲線(normal curve)的直方圖(histogram)，看資料是否非常偏離常態分佈曲線。</li>
+  <li>觀察偏態值(Skewness)是否遠離0。0表示為常態分佈。</li>
+  <li>使用常態分佈檢定Kolmogorov-Smirnov test (K-S)與Shapiro-Wilk (S-W)檢定。</li>
+  <li>使用「常態分位圖」(Normal Q-Q Plot)，觀看資料是否落於常態分佈線上。</li>
+</ul>
+<p>有時候資料可能會是常態分佈，但因為某些問題導致它看起來是非常態分佈。<a href="http://www.statisticshowto.com/probability-and-statistics/non-normal-distributions/">Statistics How To的Non Normal Distribution</a>歸納了四個可能會讓資料呈現非常態分佈的理由：</p>
+<ol>
+  <li>資料包含異常值(outliers)：如果資料包含了異常值，則資料分佈會變成偏態(skewed)。有母數統計的核心平均數(mean)特別容易收到異常值的影響。移除異常值之後再來分析看看。</li>
+  <li>資料分佈是由多組常態分佈的資料組成：這會造成雙峰(bimodal)或多峰(multimodal)的分佈。例如，下圖包含了兩組常態分佈的測試結果，這讓資料呈現了雙峰分佈。 <br><a href="//lh3.googleusercontent.com/-ikvW1D1ZepI/WmyF9rRYfuI/AAAAAAADoVU/d1TXNNw2dbkb_PDHg1WsylAeedOzxg4kQCHMYCw/s1600/bimodal-distribution-2%255B2%255D" class=""><img alt="bimodal-distribution-2" border="0" height="304" src="//lh3.googleusercontent.com/-AhSS3t_czFI/WmyGAO2MjFI/AAAAAAADoVY/ruOQPmjKFzE3XJgpA2L-rjrIUEFGOBV9wCHMYCw/bimodal-distribution-2_thumb?imgmax=800" style="display: inline; background-image: none;" title="bimodal-distribution-2" width="454"></a> <br>(圖片來源：<a href="http://www.statisticshowto.com/probability-and-statistics/non-normal-distributions/">Statistics How To</a>)</li>
+  <li>資料不足：如果資料數量不夠大，則會讓常態分佈的資料看起來完全分散。舉例來說，課堂測驗結果一般是常態分佈。如果我們用極端的例子來看，只隨機抽取三位學生並將之繪製統計圖表，則結果並不會是常態分佈。可能會是得到均勻分佈(uniform distribution)，如62、62、63；也可能會得到偏態分佈，例如80、92、99。蒐集更多資料再來分析看看吧。</li>
+  <li>錯誤的統計圖表誤導。通常是X軸或Y軸的單位、區間設定錯誤，導致直方圖出現偏態。請確認直方圖正確的繪製再來分析資料吧。</li>
+</ol>
+<p>若你的資料確實是非常態分佈，那麼你可能需要用這篇的方法來分析這些資料。</p>
+<ol></ol>
+<hr>
+<h4>R腳本與執行環境 / R script and environment</h4>
+<p><a href="//lh3.googleusercontent.com/-OkOp_8OPvOw/WmyGCgc-hEI/AAAAAAADoVc/93vG1KeqC0ETkDpS3ax8DmriVowgqnnsACHMYCw/s1600/image%255B35%255D" class=""><img alt="image" border="0" height="336" src="//lh3.googleusercontent.com/-QNZN9d363WE/WmyGEx0lNOI/AAAAAAADoVg/47YkDPPT1Psnikt9wfYbh8f9fKVIKId1wCHMYCw/image_thumb%255B11%255D?imgmax=800" style="display: inline; background-image: none;" title="image" width="454"></a></p>
+<p>R腳本必須要在有R的環境下執行。我個人使用的是在Windows上執行的RStudio，版本是1.1.383。在安裝RStudio的時候會一同安裝R環境。我使用的R的版本是3.4，此外還會用到多個套件，套件的安裝全部寫在R的腳本裡。</p>
+<ul>
+  <li>R腳本：<a href="https://pulipulichen.github.io/blog-pulipuli-info-data-2018/01/Non-Parametric Tests for Comparing Many Non-normal Distribution Groups.R">Non-Parametric Tests for Comparing Many Non-normal Distribution Groups.R</a></li>
+  <li><a href="https://www.rstudio.com/">RStudio</a>：<a href="https://www.rstudio.com/products/rstudio/#Desktop">下載RStudio Desktop網頁</a></li>
+</ul>
+<p>此腳本主要改編自<a href="https://rcompanion.org/rcompanion/d_06.html">An R Companion for the Handbook of Biological Statistics的Kruskal–Wallis Test</a>，後面加上的Welch's anova則是來自於同網站的<a href="https://rcompanion.org/rcompanion/d_05.html">One-way Anova</a>，事後多重比較Games-Howell檢定則是來自於<a href="https://rpubs.com/aaronsc32/games-howell-test">RPubs</a>。</p>
+<p>因為R的版本更新的非常頻繁，你閱讀這篇的時候安裝的不一定是跟我一樣的R 3.4版，可能會有版本差異的問題。若安裝套件時發生了版本不符合的問題，請看<a href="http://blog.pulipuli.info/2016/11/rubuntur-how-to-install-archived.html">Ubuntu中舊版R安裝套件的方法</a>。關於R的版本問題，請看我之前<a href="http://blog.pulipuli.info/2016/11/r-about-learning-r.html#postcatar-about-learning-r.html0_anchor1">學習R的感想</a>。</p>
+<h5>參考資料 / Reference</h5>
+<p>此腳本主要改編自<a href="https://rcompanion.org/rcompanion/d_06.html">An R Companion for the Handbook of Biological Statistics的Kruskal–Wallis Test</a>，後面加上的Welch's anova則是來自於同網站的<a href="https://rcompanion.org/rcompanion/d_05.html">One-way Anova</a>，事後多重比較Games-Howell檢定則是來自於<a href="https://rpubs.com/aaronsc32/games-howell-test">RPubs</a>。</p>
+<p>至於Kruskal–Wallis檢定的理論基礎請見John H. McDonald所著的<a href="http://www.biostathandbook.com/kruskalwallis.html">Kruskal–Wallis test</a>，裡面介紹了Kruskal–Wallis檢定的適用時機以及與它與單因子變異數的差別，該篇也建議Kruskal–Wallis檢定應該只用在排序資料上，像是社會科學中權力階層的上下位關係或是發展階段先後順序。Welch's anova的理論基礎請見Jim Frost所著的<a href="http://statisticsbyjim.com/anova/welchs-anova-compared-to-classic-one-way-anova/">Benefits of Welch’s ANOVA Compared to the Classic One-Way ANOVA</a>。大部分時候Welch's anova都是被視為當ANOVA違反變異數同質性檢定時的替代方案，但它也可以在Kruskal–Wallis檢定違反變異數同質性檢定的時候使用。</p>
+<hr>
+<h4>實作：多組非常態分佈同質性資料之中位數差異檢定 / Practice: Test for difference in median among many homoscedastic groups</h4>
+<table class="centered-table">
+  <tbody>
+    <tr>
+      <th>Group 1</th>
+      <th>Group 2</th>
+      <th>Group 3</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>10</td>
+      <td>19</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>11</td>
+      <td>20</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>12</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>13</td>
+      <td>22</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>14</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>15</td>
+      <td>24</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>16</td>
+      <td>25</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>17</td>
+      <td>26</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>18</td>
+      <td>27</td>
+    </tr>
+    <tr>
+      <td>46</td>
+      <td>37</td>
+      <td>28</td>
+    </tr>
+    <tr>
+      <td>47</td>
+      <td>58</td>
+      <td>65</td>
+    </tr>
+    <tr>
+      <td>48</td>
+      <td>59</td>
+      <td>66</td>
+    </tr>
+    <tr>
+      <td>49</td>
+      <td>60</td>
+      <td>67</td>
+    </tr>
+    <tr>
+      <td>50</td>
+      <td>61</td>
+      <td>68</td>
+    </tr>
+    <tr>
+      <td>51</td>
+      <td>62</td>
+      <td>69</td>
+    </tr>
+    <tr>
+      <td>52</td>
+      <td>63</td>
+      <td>70</td>
+    </tr>
+    <tr>
+      <td>53</td>
+      <td>64</td>
+      <td>71</td>
+    </tr>
+    <tr>
+      <td>342</td>
+      <td>193</td>
+      <td>72</td>
+    </tr>
+  </tbody>
+</table>
+<p>(表格來源：<a href="http://www.biostathandbook.com/kruskalwallis.html">Handbook of Biological Statistics</a>)</p>
+<p>以下我用<a href="http://www.biostathandbook.com/kruskalwallis.html">John H. McDonald在介紹Kruskal–Wallis檢定</a>的時候使用的資料作為例子，以此來示範如何使用R腳本<a href="https://pulipulichen.github.io/blog-pulipuli-info-data-2018/01/Non-Parametric%20Tests%20for%20Comparing%20Many%20Non-normal%20Distribution%20Groups.R">Non-Parametric Tests for Comparing Many Non-normal Distribution Groups.R</a>來進行Kruskal–Wallis檢定。</p>
+<h5>資料格式 / Data format</h5>
+<p><a href="//lh3.googleusercontent.com/-120qHJ64nhc/Wmx7B-JdwXI/AAAAAAADoT4/125yNXRULCYScxCgBSoq4nnFf3jrcQI4gCHMYCw/s1600/image%255B5%255D" class=""><img alt="image" border="0" height="388" src="//lh3.googleusercontent.com/-J_qY3jqTb_s/Wmx7EAmfVhI/AAAAAAADoT8/zPN3Zy-NfektLFKFKeNxJwldZpV4yGBZwCHMYCw/image_thumb%255B1%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="378"></a></p>
+<ul>
+  <li>Kruskal–Wallis test example：<a href="https://docs.google.com/spreadsheets/d/1LeEit0w3cwbPZmQVhFf-KsdaFj7R5zzZnszdiA6cboY/edit?usp=sharing">Google試算表</a>、<a href="https://docs.google.com/spreadsheets/d/1LeEit0w3cwbPZmQVhFf-KsdaFj7R5zzZnszdiA6cboY/export?format=csv">CSV格式下載</a></li>
+</ul>
+<p>R腳本需要輸入的資料必須是CSV格式，以逗點(,)隔開欄位，而第一行必須是<font color="#ff0000"><strong>group</strong></font>跟<strong>
+    <font color="#ff0000">value</font>
+  </strong>，group欄位擺放組別名稱，value欄位則是擺放數字資料。請務必依照這個格式來建立資料，這樣才能用在R腳本中。</p>
+<p><a href="//lh3.googleusercontent.com/-XzcUjsShP0M/Wmx7Gca8VZI/AAAAAAADoUA/pqsc0UbUKe8rqGk0C7wT3fbLOwn1U179wCHMYCw/s1600/image%255B11%255D" class=""><img alt="image" border="0" height="150" src="//lh3.googleusercontent.com/-1x8_MDo1Th0/Wmx7Itf6OhI/AAAAAAADoUE/_MGsISkkWGw90f7fcaqAR6dnIOtyx_YAACHMYCw/image_thumb%255B3%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="109"></a></p>
+<p>請下載<a href="https://docs.google.com/spreadsheets/d/1LeEit0w3cwbPZmQVhFf-KsdaFj7R5zzZnszdiA6cboY/export?format=csv">CSV格式</a>，待會兒就來使用。</p>
+<h5>執行R腳本 / Excute R script</h5>
+<p><a href="//lh3.googleusercontent.com/-ONtFfcgv8uo/Wmx7KjKrj0I/AAAAAAADoUI/ZJ6IeK08bPUS70lZNmXlBdlj_9u1U18IQCHMYCw/s1600/image%255B8%255D" class=""><img alt="image" border="0" height="280" src="//lh3.googleusercontent.com/-sK_uod_lZlE/Wmx7M_jzGkI/AAAAAAADoUM/s-9cMbS_dPo9yRo-Y0f0EPetrBvvxP3twCHMYCw/image_thumb%255B2%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="454"></a></p>
+<p>請在<a href="https://pulipulichen.github.io/blog-pulipuli-info-data-2018/01/Non-Parametric%20Tests%20for%20Comparing%20Many%20Non-normal%20Distribution%20Groups.R">Non-Parametric Tests for Comparing Many Non-normal Distribution Groups.R</a>檔案按右鍵，在右鍵選單中的「開啟檔案」點選RStudio。</p>
+<p><a href="//lh3.googleusercontent.com/-8eSEI4KPG7c/Wmx7PCrbeaI/AAAAAAADoUQ/DkmQp1ZDiTgOefb9rB5ezXLmYVFVq-B2QCHMYCw/s1600/image%255B14%255D" class=""><img alt="image" border="0" height="307" src="//lh3.googleusercontent.com/-YdC6X8tLTmU/Wmx7RYUieQI/AAAAAAADoUU/rrv6Wv6TQD0s7QdiGUeIpPb8vXpTEA5bACHMYCw/image_thumb%255B4%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="454"></a></p>
+<p>接著RStudio會開啟並載入R腳本。我們在腳本的位置按熱鍵Ctrl + A全選腳本文字，然後按下上方的「Run」按鈕。</p>
+<p><a href="//lh3.googleusercontent.com/-vaES-O0InyU/Wmx7Ts8oq8I/AAAAAAADoUY/HFFmurEoYbMYz2DExb_E8vOOmLO9pAkHQCHMYCw/s1600/image%255B17%255D" class=""><img alt="image" border="0" height="257" src="//lh3.googleusercontent.com/-4RLoqEUoRyk/Wmx7WMd0PuI/AAAAAAADoUc/03t58dUMLKQF0lbR-MJuukVh7GUuPPo1wCHMYCw/image_thumb%255B5%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="454"></a></p>
+<p>選擇剛剛下載的CSV檔案，然後按下「開啟」。</p>
+<p><a href="//lh3.googleusercontent.com/-IfLJDMbPUX8/Wmx7Yq8fTyI/AAAAAAADoUg/NmoZfs0JN4IRNByYpIHlNQ6tMrlJ3DLAwCHMYCw/s1600/image%255B20%255D" class=""><img alt="image" border="0" height="307" src="//lh3.googleusercontent.com/-t-lAsCjfgGo/Wmx7ax3rmVI/AAAAAAADoUk/eI7Xi4Zh3Oci0YFTJaq4WWq5glzshEOZACHMYCw/image_thumb%255B6%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="454"></a></p>
+<p>如果是第一次執行，R環境需要安裝大量的套件，大概會花個10分鐘左右，請耐心等候。第二次執行的時候，大概30秒內可以完成。最後看到左下角的Console有出現「Finish」就表示執行完成。</p>
+<p><a href="//lh3.googleusercontent.com/-P3SIgYZCXds/Wmx7dFr600I/AAAAAAADoUo/yX6tOFXM7gUgcA4Pm29riHyR3Elxj1tEwCHMYCw/s1600/image%255B32%255D" class=""><img alt="image" border="0" height="323" src="//lh3.googleusercontent.com/-OhNz36dbuZE/Wmx7fnaxmaI/AAAAAAADoUs/9UsEfp7Ar-UmJ1WmK64wo8SgOvKmTKWFQCHMYCw/image_thumb%255B10%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="454"></a></p>
+<p>在CSV檔案的目錄底下會出現以CSV檔案為名、並加上日期時間與輸出資料後綴的統計結果檔案，包括：</p>
+<ul>
+  <li>直方圖(histogram)：檔案名稱例子為Kruskal–Wallis test example - data_0127-2042_<strong>
+      <font color="#ff0000">histogram.png</font>
+    </strong></li>
+  <li>箱型圖(boxplot)：檔案名稱例子為Kruskal–Wallis test example - data_0127-2042_<strong>
+      <font color="#ff0000">boxplot.png</font>
+    </strong></li>
+  <li>檢定結果：Kruskal–Wallis test example - data_0127-2042_<strong>
+      <font color="#ff0000">result.txt</font>
+    </strong></li>
+</ul>
+<p>以下我們以Kruskal–Wallis檢定結果檔案為主，其他兩個統計圖表為輔，來解說Kruskal–Wallis檢定結果吧。</p>
+<h5>檢定結果 / Result</h5>
+<p>在result.txt為後綴的檔案中記錄著分析的過程，以下我就各個段落進行解說：</p>
+<h6>檔案名稱 / File</h6>
+<pre><code>### File: <br>
+C:\data\Kruskal–Wallis test example - data.csv</code></pre>
+
+<p>記錄該結果是來自於那個檔案。</p>
+
+<h6>敘述統計 / Descriptive statistics</h6>
+
+<pre><code>### Medians and descriptive statistics<br>
+<br>&nbsp;&nbsp; group&nbsp; n mean&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sd min&nbsp;&nbsp;&nbsp; Q1 median&nbsp;&nbsp;&nbsp; Q3 max<br>
+1&nbsp;&nbsp;&nbsp;&nbsp; A 18 43.5 77.77513&nbsp;&nbsp; 1&nbsp; 5.25&nbsp;&nbsp; 27.5 49.75 342<br>
+2&nbsp;&nbsp;&nbsp;&nbsp; B 18 43.5 43.69446&nbsp; 10 14.25&nbsp;&nbsp; 27.5 60.75 193<br>
+3&nbsp;&nbsp;&nbsp;&nbsp; C 18 43.5 23.16755&nbsp; 19 23.25&nbsp;&nbsp; 27.5 67.75&nbsp; 72</code></pre>
+
+<p>敘述統計會列出各個組別的組別名稱(group)、個數(n)、平均數(mean)、標準差(sd)、最小值(min)、下四分位數(Q1)、中位數(median)、上四分位數(Q3)、最大值(max)。就像我在<a href="http://blog.pulipuli.info/2017/09/measures-of-center-and-spread.html">資料的中心與離度</a>所強調的，在說明敘述統計的時候，最好搭配圖表一起看。</p>
+
+<p><a href="//lh3.googleusercontent.com/-xYXesSgIy0M/Wmx7iKy2XbI/AAAAAAADoUw/wUeNvKbVlTUnheSAwVY5zTHRAsU2Of6OwCHMYCw/s1600/Image" class=""><img alt="Kruskal–Wallis test example - data_0127-2042_histogram" border="0" height="454" src="//lh3.googleusercontent.com/-8LOdZru0bj0/Wmx7kUJquwI/AAAAAAADoU0/SiiDaiBxUEQ6bK-dxhzItFqJJJJ_FzgQQCHMYCw/Image?imgmax=800" style="display: inline; background-image: none;" title="Kruskal–Wallis test example - data_0127-2042_histogram" width="454"></a></p>
+
+<p>histogram.png是各組的直方圖，注意Y軸為所佔比例，而非資料的個數。從這邊可以看到A組跟B組各有一個異常值，導致這兩組的資料明顯呈現右偏。</p>
+
+<p><a href="//lh3.googleusercontent.com/-5l3yeL43NvY/WmyGHQ4_h8I/AAAAAAADoVk/7h2Fkwr1LKYm5MICgzNlLkWUhZl-huTXwCHMYCw/s1600/Image" class=""><img alt="Kruskal–Wallis test example - data_0127-2042_boxplot" border="0" height="454" src="//lh3.googleusercontent.com/-bxSDjr5xm5M/WmyGJnHGLoI/AAAAAAADoVo/DCCDBFSqlo4GHHc3bR9n0VYVpcpLSBefQCHMYCw/Image?imgmax=800" style="display: inline; background-image: none;" title="Kruskal–Wallis test example - data_0127-2042_boxplot" width="454"></a></p>
+
+<p>boxplot.png是各組的箱型圖，我們可以看到三組的五數綜合比較。儘管三組的中位數都相同，但A組跟B組的離群值讓三組的資料分佈有所差異。關於箱型圖的閱讀方法，請看用<a href="http://blog.pulipuli.info/2016/11/r-draw-box-plot-with-r.html">R畫箱型圖</a>。</p>
+
+<h6>常態性檢定 / Normality test</h6>
+
+<pre><code>### Normality test<br>
+<br>
+Group: A, Shapiro-Wilk normality test W = 0.4856823 p-value = 6.035973e-07<br>
+Group: B, Shapiro-Wilk normality test W = 0.6784267 p-value = 4.530191e-05<br>
+Group: C, Shapiro-Wilk normality test W = 0.7404266 p-value = 0.0002453774</code></pre>
+
+<p>這裡測試各組的資料分佈是否為常態分佈。根據<a href="http://www.pt.ntu.edu.tw/hmchai/SAS/SASdescriptive/SASnormality.htm">柴惠敏的建議</a>，若該組的樣本個數小於50，則是使用Shapiro-Wilk常態檢定，檢定統計量為W值；若該組的樣本數在50以上，則是使用Kolmogorov-Smirnov (K-S)常態檢定，檢定統計量為D值。<a href="http://www.sthda.com/english/wiki/normality-test-in-r">STHDA</a>推薦使用Shapiro-Wilk檢定，因為它的<a href="https://researcher20.com/2011/06/05/%E4%BB%80%E9%BA%BC%E6%98%AF%E7%B5%B1%E8%A8%88%E6%AA%A2%E5%AE%9A%E5%8A%9B-power%EF%BC%9F/">統計檢定力(power)</a>高於Kolmogorov-Smirnov檢定。這邊R腳本會依照該組的樣本個數來自動判斷要使用的檢定法。</p>
+
+<p>這兩個檢定的虛無假設都是該組資料為常態分佈。因此若p值在0.05以下，則表示該組資料並非常態分佈。以這個例子來說，A組的p值為6.035973e-07，有e表示是<a href="https://support.office.com/zh-tw/article/%E4%BB%A5%E7%A7%91%E5%AD%B8%E8%A8%98%E8%99%9F-%E6%8C%87%E6%95%B8-%E8%A1%A8%E7%A4%BA%E6%B3%95%E9%A1%AF%E7%A4%BA%E6%95%B8%E5%AD%97-f85a96c0-18a1-4249-81c3-e934cd2aae25">科學記號格式</a>，意思是6.035973乘以-10的7次方，也就是非常非常小的小數，低於顯著水準0.05，因此A組資料並非常態分佈。另外C組的p值為0.0002453774，低於顯著水準0.05，因此也不是常態分佈。</p>
+
+<p>一般來說，無母數檢定並不會特別去檢定資料分佈是否非常態。這個常態性檢定僅供參考即可。</p>
+
+<h6>變異數同質性檢定 / Test for Homogeneity of Variance</h6>
+
+<pre><code>### Test for Homogeneity of Variance<br>
+<br>
+Levene's Test for Homogeneity of Variance (center = median)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Df F value Pr(&gt;F)<br>
+group&nbsp; 2&nbsp; 0.6864&nbsp; 0.508<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 51&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+<br>
+Data are homoscedastic. Excute Kruskal–Wallis test.</code></pre>
+
+<p>這邊我們使用Levene變異數同質性檢定中無母數檢定的方法來檢定三組的變異數是否相同。請看「Pr(&gt;F)」這一欄的顯著性是否在0.05以上。若在0.05以上使用的是Kruskal–Wallis檢定，否則使用Welch's anova。</p>
+
+<p>在本例中，因為三組資料變異數同質，因此進行Kruskal–Wallis檢定。</p>
+
+<h6>Kruskal–Wallis檢定 / Kruskal–Wallis test</h6>
+
+<pre><code>### Kruskal–Wallis test for equal variances<br>
+<br>&nbsp;&nbsp; Kruskal-Wallis rank sum test<br>
+<br>
+data:&nbsp; value by group<br>
+Kruskal-Wallis chi-squared = 7.3553, df = 2, p-value = 
+0.02528<br><br>Eta squared: 0.138779831861593</code></pre>
+
+<p>檢定結果的卡方統計檢定量請看Kruskal-Wallis chi-squared，為7.3553。自由度df為2。各組之間是否有顯著差異則要看p-value，若在顯著水準0.05以上，則表示各組之間的中位數沒有顯著差異，否則表示各組之間的中位數有顯著差異。本例的p-value為0.02528，表示各組之間的中位數達到顯著差異。</p>
+
+<p>最後的Eta squared是表示分組變項group對於value的影響力，也就是關聯強度。計算方式來自於<a href="https://www.youtube.com/watch?v=xLAUs4hL5Vs&amp;t=4s">how2stats的Kruskal-Wallis - SPSS教學</a>。關於Eta squared的說明請看我介紹<a href="http://blog.pulipuli.info/2017/10/spss-one-way-anova-in-spss.html#postcataspss-one-way-anova-in-spss.html0_anchor12">ANOVA</a>的這篇。Eta squared的判斷準則如下：</p>
+
+<ul>
+  <li>0.059 &gt; eta squared &gt;= 0.01 低度關聯強度</li>
+
+  <li>0.138 &gt; eta squared &gt;= 0.59 中度關聯強度</li>
+
+  <li>eta squared &gt;= 0.138 高度關聯強度</li>
+</ul>
+
+<p>以本例的0.138779831861593為例，是屬於高度關聯強度。</p>
+
+<h6>Dunn事後多重比較檢定 / Dunn Post Hoc test</h6>
+
+<pre><code>### Dunn test<br>
+<br>&nbsp;&nbsp; Comparison&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Z&nbsp;&nbsp;&nbsp; P.unadj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; P.adj<br>
+1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A - B -1.356036 0.17508782 0.17508782<br>
+2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A - C -2.712071 0.00668642 0.02005926<br>
+3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; B - C -1.356036 0.17508782 0.26263172</code></pre>
+
+<p>若Kruskal–Wallis檢定有顯著差異，則繼續查看Dunn檢定的結果。Dunn檢定將各組之間兩兩比較，以此查看各組之間是否有顯著差異。本例中有三個組別「A」、「B」、「C」，因此共有「A - B」、「A - C」跟「B - C」三種組合可供比較。其中第二組比較「A - C」結果中的調整後P值(P.adj) 0.02小於0.05，而Z值為-2.712071小於0，表示後者組別「C」顯著大於前者組別「A」。而其他兩組比較則沒有顯著差異。</p>
+
+<p>這樣子就完成了Kruskal–Wallis檢定跟Dunn事後多重比較囉。</p>
+
+<hr>
+
+<h4>實作：多組非常態分佈異質性資料之中位數差異檢定 / Practice: Test for difference in mean among many heteroscedastic groups</h4>
+
+<p>許多使用Kruskal–Wallis檢定的研究者常常忘記Kruskal–Wallis檢定有各組資料為同質性的假設。當各組的個數相同，或是分佈類似時，各組資料常常具有同質性(homoscedastic)。但若各組的樣本數差異過大時，很容易就會發生各組資料為異質性(heteroscedastic)的情況，這時候就要改用Welch's anova來分析。我寫的R腳本中會以無母數的Levene檢定來做各組資料是否為同質性的檢定，以此來判斷要選擇用Kruskal–Wallis檢定還是Welch's anova。以下我們就來看看這種情況會怎麼分析。</p>
+
+<h5>異質性的資料 / Heteroscedastic data</h5>
+
+<p><a href="//lh3.googleusercontent.com/-GLn7u0WgGWs/Wm2HkYZVMSI/AAAAAAADobk/v0fJpVQv050IBNrM11qX3jrxYsLOTBitACHMYCw/s1600/image%255B38%255D" class=""><img alt="image" border="0" height="404" src="//lh3.googleusercontent.com/-JyCZ9i8Mfps/Wm2HnedauDI/AAAAAAADobo/EK5ctGZMbQoWH-iQRYK-yuEhEJ-mj7NrQCHMYCw/image_thumb%255B12%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="314"></a></p>
+
+<ul>
+  <li>Welchs ANOVA Test example：<a href="https://docs.google.com/spreadsheets/d/1ARiV3E6S_1NeDFh4jY1SlfPLmF6u4FQoRTl5Kp-fqMA/edit?usp=sharing">Google試算表</a>、<a href="https://docs.google.com/spreadsheets/d/1ARiV3E6S_1NeDFh4jY1SlfPLmF6u4FQoRTl5Kp-fqMA/export?format=csv">CSV格式下載</a></li>
+</ul>
+
+<p>這份資料是來自於<a href="http://www.real-statistics.com/one-way-analysis-of-variance-anova/welchs-procedure/">Real Statistics Using Excel的Welch's ANOVA Test</a>的例子。我們的格式也一樣要有group跟value，然後請下載<a href="https://docs.google.com/spreadsheets/d/1ARiV3E6S_1NeDFh4jY1SlfPLmF6u4FQoRTl5Kp-fqMA/export?format=csv">CSV格式</a>做準備吧。</p>
+
+<p><a href="//lh3.googleusercontent.com/-6ie3C1p3Hhc/Wm2HqaM6qXI/AAAAAAADobs/_mXcfuSCvhAHJVG-awkiD9uBzEyAClJowCHMYCw/s1600/image%255B41%255D" class=""><img alt="image" border="0" height="150" src="//lh3.googleusercontent.com/-tH5rEhie57s/Wm2HtIMbg5I/AAAAAAADobw/2eeWbrk1qMo76yV0bVwP5nMm0yfQq304wCHMYCw/image_thumb%255B13%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="109"></a></p>
+
+<p>待會會使用這個CSV檔案來分析。</p>
+
+<h5>執行R腳本 / Excute R script</h5>
+
+<p><a href="//lh3.googleusercontent.com/-V_E8r2uxYOc/Wm2HvU5y7ZI/AAAAAAADob0/rtWXo4ZG5f8R9GhtwERSaZJYwxxRjEgQgCHMYCw/s1600/image%255B44%255D" class=""><img alt="image" border="0" height="307" src="//lh3.googleusercontent.com/-6vnL0g58xrk/Wm2Hx8QIOLI/AAAAAAADob4/wXr422MKxKgmSwLjODn165tRimmlkMDqACHMYCw/image_thumb%255B14%255D?imgmax=800" style="margin: 0px; display: inline; background-image: none;" title="image" width="454"></a></p>
+
+<p>操作方法跟上述相同，在此我們就不贅述。若順利分析完成，最後一樣可以獲得三個檔案：</p>
+
+<ul>
+  <li>直方圖：Welchs ANOVA Test example - data_0128-1514_<strong>
+      <font color="#ff0000">histogram.png</font>
+    </strong></li>
+
+  <li>箱型圖：Welchs ANOVA Test example - data_0128-1514_<font color="#ff0000"><strong>boxplot.png</strong></font>
+  </li>
+
+  <li>檢定結果：Welchs ANOVA Test example - data_0128-1514_<strong>
+      <font color="#ff0000">result.txt</font>
+    </strong></li>
+</ul>
+
+<p>以下我們依然是來從檢定結果檔案來說明分析的結果吧。</p>
+
+<h5>檢定結果 / Result</h5>
+
+<p>在result.txt為後綴的檔案中記錄著分析的過程，以下我就各個段落進行解說：</p>
+
+<h6>檔案名稱 / File</h6>
+
+<pre><code>### File<br>
+<br>
+C:\data\Welchs ANOVA Test - data.csv</code></pre>
+
+<p>這是本次分析的檔案。</p>
+
+<h6>敘述統計 / Descriptive statistics</h6>
+
+<pre><code>### Medians and descriptive statistics<br>
+<br>&nbsp;&nbsp;&nbsp;&nbsp; group&nbsp; n&nbsp;&nbsp;&nbsp;&nbsp; mean&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sd min&nbsp;&nbsp;&nbsp; Q1 median&nbsp;&nbsp;&nbsp; Q3 max<br>
+1&nbsp;&nbsp;&nbsp;&nbsp; New 10 43.00000&nbsp; 4.027682&nbsp; 38 40.25&nbsp;&nbsp;&nbsp;&nbsp; 42 44.75&nbsp; 50<br>
+2&nbsp;&nbsp;&nbsp;&nbsp; Old&nbsp; 9 33.44444&nbsp; 9.302031&nbsp; 22 27.00&nbsp;&nbsp;&nbsp;&nbsp; 31 40.00&nbsp; 50<br>
+3 Control&nbsp; 8 35.75000 16.298554&nbsp; 16 22.75&nbsp;&nbsp;&nbsp;&nbsp; 34 46.75&nbsp; 60</code></pre>
+
+<p>敘述統計中可以看到這次的資料有三組「New」、「Old」跟「Control」，三組的個數(n)、平均數(mean)、標準差(sd)都不一樣。</p>
+
+<p><a href="//lh3.googleusercontent.com/-XZwSXz8GjAA/Wm2HzxVWE7I/AAAAAAADob8/iy7itPDEGiIq7hBbqCLhVhTxwFuwSpH7QCHMYCw/s1600/Welchs%2BANOVA%2BTest%2Bexample%2B-%2Bdata_0128-1514_histogram%255B2%255D" class=""><img alt="Welchs ANOVA Test example - data_0128-1514_histogram" border="0" height="454" src="//lh3.googleusercontent.com/-sNXXZbNPkcE/Wm2H2VaM3kI/AAAAAAADocA/oOVQ_eZoLVkNVAa4n1ipnklioFuc-obNwCHMYCw/Welchs%2BANOVA%2BTest%2Bexample%2B-%2Bdata_0128-1514_histogram_thumb?imgmax=800" style="display: inline; background-image: none;" title="Welchs ANOVA Test example - data_0128-1514_histogram" width="454"></a></p>
+
+<p>在以histogram.png後綴的直方圖裡面可以看到三組的分佈。Control的分佈較廣，Old的資料偏小且分散，而New的資料則較大且集中。</p>
+
+<p><a href="//lh3.googleusercontent.com/-QZOIMTQSC-0/Wm2H48qRctI/AAAAAAADocE/kTIXBJc5NEE6SRUJgeXSKQpU31BQ0U4RgCHMYCw/s1600/Welchs%2BANOVA%2BTest%2Bexample%2B-%2Bdata_0128-1514_boxplot%255B2%255D" class=""><img alt="Welchs ANOVA Test example - data_0128-1514_boxplot" border="0" height="454" src="//lh3.googleusercontent.com/-2w4YDqsolyQ/Wm2H7ZU4_WI/AAAAAAADocI/HmoStMg8gbsP11pvTboUiJikAQKGyEw4gCHMYCw/Welchs%2BANOVA%2BTest%2Bexample%2B-%2Bdata_0128-1514_boxplot_thumb?imgmax=800" style="display: inline; background-image: none;" title="Welchs ANOVA Test example - data_0128-1514_boxplot" width="454"></a></p>
+
+<p>在以boxplot.png後綴的箱型圖裡面可以清楚比較三組的分佈。可以看到New大部分都大於Old，而Control則是涵蓋前兩組。</p>
+
+<h6>常態性檢定 / Normality test</h6>
+
+<pre><code>### Normality test<br>
+<br>
+Group: New, Shapiro-Wilk normality test W = 0.9239325 p-value = 0.3909235<br>
+Group: Old, Shapiro-Wilk normality test W = 0.9327685 p-value = 0.5081456<br>
+Group: Control, Shapiro-Wilk normality test W = 0.9419088 p-value = 0.6299536</code></pre>
+
+<p>常態性檢定中，因為各組資料個數都小於50，因此使用的是Shapiro-Wilk檢定。三組的p值都大於顯著水準0.05，表示三組皆為常態分佈。因為<a href="http://www.real-statistics.com/one-way-analysis-of-variance-anova/welchs-procedure/">這個例子</a>是用來跟有母數統計ANOVA做對比用，因此資料本身是為常態分佈。</p>
+
+<h6>變異數同質性檢定 / Test for Homogeneity of Variance</h6>
+
+<pre><code>### Test for Homogeneity of Variance<br>
+<br>
+Levene's Test for Homogeneity of Variance (center = median)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Df F value&nbsp;&nbsp; Pr(&gt;F)&nbsp;&nbsp; <br>
+group&nbsp; 2&nbsp; 6.5194 0.005478 **<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 24&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+---<br>
+Signif. codes:&nbsp; 0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1<br>
+<br>
+Data are heteroscedastic. Excute Welch's anova.</code></pre>
+
+<p>在Levene檢定中，Pr(&gt;F)的數值0.005478小於顯著水準0.05，表示各組資料為異質性，因此接下來將使用Welch's anova進行分析。</p>
+
+<h6>Welch's anova</h6>
+
+<pre><code>### Welch’s anova for unequal variances<br>
+<br>&nbsp;&nbsp; One-way analysis of means (not assuming equal variances)<br>
+<br>
+data:&nbsp; value and group<br>
+F = 4.3153, num df = 2.0, denom df = 11.7, p-value = 0.03947</code></pre>
+
+<p>在Welch's anova中檢定的是各組的平均數是否相同，檢定統計量F值為4.3153，而顯著性p值(p-value)為0.03947，小於顯著水準0.05，表示三組資料之間有顯著差異。</p>
+
+<h6>Games-Howell事後多重比較 / Games-Howell Post-Hoc Test</h6>
+
+<pre><code>### Games-Howell Post-Hoc Test<br>
+<br>
+### Oneway Anova for y=value and x=group (groups: New, Old, Control)<br>
+<br>
+Omega squared: 95% CI = [NA; .36], point estimate = .08<br>
+Eta Squared: 95% CI = [0; .32], point estimate = .15<br>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SS Df&nbsp;&nbsp;&nbsp;&nbsp; MS&nbsp;&nbsp;&nbsp; F&nbsp;&nbsp;&nbsp; p<br>
+Between groups (error + effect)&nbsp; 474.28&nbsp; 2 237.14 2.11 .143<br>
+Within groups (error only)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2697.72 24 112.41&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+<br>
+<br>
+### Post hoc test: games-howell<br>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; diff&nbsp; ci.lo ci.hi&nbsp;&nbsp;&nbsp; t&nbsp;&nbsp;&nbsp; df&nbsp;&nbsp;&nbsp; p<br>
+Old-New&nbsp;&nbsp;&nbsp;&nbsp; -9.56 -18.65 -0.46 2.85 10.66 .040<br>
+Control-New -7.25 -24.26&nbsp; 9.76 1.23&nbsp; 7.69 .472<br>
+Control-Old&nbsp; 2.31 -15.41 20.02 0.35 10.84 .934</code></pre>
+
+<p>Eta Squared的點估計值為0.15，表示高度關聯強度。然後我們看「### Post hoc test: games-howell」以下的部分，可以看到「Old」、「New」、「Control」三組的比較結果。</p>
+
+<p>在「Old-New」的比較中，p值(p)為0.04，小於顯著水準0.05，而diff為-9.56，表示前者「Old」比後者「New」還小。另一方面，「Control-New」跟「Control-Old」的比較中，p值都超過0.05，表示兩組比較沒有顯著差異。</p>
+
+<p>這樣子就完成了Welch's anova跟Games-Howell事後多重比較囉。</p>
+
+<hr>
+
+<h4>結語 / Conclusion</h4>
+
+<p>本篇以R腳本實作了Kruskal–Wallis檢定跟Dunn事後多重比較以及Welch's anova跟Games-Howell事後多重比較這兩套無母數統計方法，可以用來分析非常態分佈的多組資料之間是否有顯著差異。這個方法整理完之後，應該可以對社會科學、行為研究帶來很大的幫助。</p>
+
+<p>我本來是想要用SPSS來完成這個分析，但看了最完整的<a href="https://www.youtube.com/watch?v=Md8rqQ-oUH0">how2stats的Kruskal-Wallis - SPSS教學</a>後，發現它不僅操作起來非常複雜，而且也只實作了最基本的Kruskal–Wallis檢定，更別說變異數同質性檢定、常態分佈檢定、直方圖跟箱型圖的繪製等等。後來我看了幾篇用R實作的教學，發現R做起來不僅容易許多，而且輸出資料也很容易客製化，甚至要用Kruskal–Wallis檢定還是Welch's anova也都可以用程式判斷，所以這次我就把它整理成更好用的R腳本，提供給大家使用。這次的R腳本比上次在做<a href="http://blog.pulipuli.info/2017/01/rarulessequences-sequential-pattern.html">循序樣式探勘</a>的時候進步許多，蠻接近我理想中的R的用法。</p>
+
+<p>這篇在撰寫的時候，本來只有Kruskal–Wallis檢定跟Dunn事後多重比較，但很多文獻提到了非同質性時的處理方法，又有在講資料是否為常態分佈的檢定，我就一邊看一邊加入各種功能，最後花了兩天的時間才整理完這份R腳本以及這篇教學，花的時間意外的多了很多。</p>
+
+<p>之後有時間的話我也想依照這份腳本做成一份ANOVA分析用的R腳本，同時也將資料違反同質性假設(是異質性)的時候改用Welch's anova的方法也納入考量，這樣應該會讓ANOVA好用許多。</p>
+
+<hr>
+
+<p>這篇多組非常態分佈資料的差異檢定的整理就到這裡為止。我本身並非統計專業，只是因為分析資料時會用到，所以看文獻來將它整理一下。如果有什麼統計上的建議，歡迎在下面留言提出指教。當你分析的資料也是非常態分佈的時候，那這篇應該會對你有些幫助。如果你覺得我整理的不錯的話，請幫我在AddThis分享工具按讚、將這篇分享到Facebook等社群媒體吧！感謝你的耐心閱讀，讓我們下一篇見。</p>
