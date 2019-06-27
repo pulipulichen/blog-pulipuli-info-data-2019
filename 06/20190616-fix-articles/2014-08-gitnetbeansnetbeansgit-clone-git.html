@@ -1,0 +1,91 @@
+<a class="" href="https://www.blogger.com/null" src="//3.ggpht.com/-anD4_oPGyuY/U_G6W7LaI2I/AAAAAAABk4c/ZotV_zgA4D0/s1600/2014-08-18_154048%25255B2%25255D.jpg"><img alt="2014-08-18_154048" border="0" height="304" src="//lh3.ggpht.com/-9CS3sY63WLo/U_G6Yv9rSBI/AAAAAAABk4k/AqYEprmG3CQ/2014-08-18_154048_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_154048" width="283" /></a><br />
+本文介紹如何在<a href="https://netbeans.org/">NetBeans</a>中複製<a href="http://pulipuli.blogspot.tw/2013/02/github-part1.html">Git專案</a>到本機端，然後建立NetBeans專案，以便開始進行程式的開發。<br />
+This article describes how to clone <a href="http://pulipuli.blogspot.tw/2013/02/github-part1.html">Git project</a> and then create a NetBeans project in <a href="https://netbeans.org/">NetBeans</a>.<br />
+<div class="blogger-post-hr">
+</div>
+<a href="https://www.blogger.com/null" name="more"></a>
+
+<h4>
+Git專案 / Git Project</h4>
+<a class="" href="https://www.blogger.com/null" src="//6.ggpht.com/-XlRhPFGBX6Q/U_G6aM6MLOI/AAAAAAABk4s/L9N9GYFfeuU/s1600/2014-08-18_152111%252520-%252520Copy%25255B2%25255D.jpg"><img alt="2014-08-18_152111 - Copy" border="0" height="176" src="//lh3.ggpht.com/-zCq0mrMS8p4/U_G6budjI_I/AAAAAAABk40/byIsj7-Dk3k/2014-08-18_152111%252520-%252520Copy_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152111 - Copy" width="304" /></a><br />
+本文以我最近要開始的新專案「<a href="https://github.com/pulipulichen/php-file-host">PHP File Host</a>」為例子來做示範。這是一個存放在<a href="https://github.com/">GitHub</a>的開放原始碼專案，大家可以任意複製(Clone)裡面的程式碼到本機端來修改。要複製Git專案的方法很多，有HTTPS、SSH與<a href="http://zh.wikipedia.org/wiki/Subversion">Subversion</a>等通訊協定。在NetBeans裡面，我們可以用HTTPS通訊協定來進行複製，連線方式在GitHub專案網頁的右方下面「<strong>HTTPS</strong> clone URL」。<br />
+總結上述，以下是Git專案的資訊：<br />
+<ul>
+<li>Git專案網頁：<a href="https://github.com/pulipulichen/php-file-host">PHP File Host</a></li>
+<li>HTTPS複製網址：<a href="https://github.com/pulipulichen/php-file-host.git" title="https://github.com/pulipulichen/php-file-host.git">https://github.com/pulipulichen/php-file-host.git</a></li>
+</ul>
+<h4>
+NetBeans環境 / NetBeans Version</h4>
+<a class="" href="https://www.blogger.com/null" src="//6.ggpht.com/--CC3-ajcQUM/U_G6c4uJOHI/AAAAAAABk48/7qd_0BWAz_A/s1600/2014-08-18_152321%25255B2%25255D.jpg"><img alt="2014-08-18_152321" border="0" height="304" src="//lh4.ggpht.com/-_LUaE9TnuQ0/U_G6eLAqNLI/AAAAAAABk5E/x12LRFYphyE/2014-08-18_152321_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152321" width="266" /></a><br />
+NetBeans是我現在主要的IDE開發環境，他也是一個開放原始碼的自由軟體。NetBeans不僅支援語法標亮、自動完成(<a href="https://platform.netbeans.org/tutorials/nbm-code-completion.html">auto-completion</a>)，從7.4版之後也開始支援<a href="https://netbeans.org/kb/docs/ide/git.html">Git</a>。以往我<a href="http://pulipuli.blogspot.tw/2013/02/github-part1.html">使用TotoiseGIT來管理GIT的工作</a>，現在逐漸都改以NetBeans來進行操作。<br />
+為了讓大家能夠更輕易以NetBeans來開始使用Git專案，本文將介紹如何複製Git專案到NetBeans中，並直接建立一個NetBeans專案來使用。<br />
+<ul>
+<li><a href="https://netbeans.org/">NetBeans 網站</a></li>
+<li><a href="https://netbeans.org/downloads/">NetBeans下載</a>：建議下載All版本，可以同時支援JavaScript與PHP</li>
+<li>NetBeans的Git功能說明：<a href="https://netbeans.org/kb/docs/ide/git.html">Using Git Support in NetBeans IDE</a></li>
+</ul>
+<div class="blogger-post-hr">
+<hr />
+</div>
+<h4>
+在NetBeans中複製Git專案 / Clone Git Project in NetBeans</h4>
+以下介紹如何在NetBeans中複製Git專案。大致上操作步驟分成兩個部分：從Git複製專案檔案、以及在NetBeans中建立NetBeans專案。<br />
+Git專案主要負責程式碼的版本控制，NetBeans專案通常還包括一些專案程式碼指定編碼、伺服器上傳連線等資訊，而這些資訊並不建議放到Git專案中公開，兩者要分開處理。<br />
+<h5>
+Part 1. 複製Git專案 / Clone Git Project</h5>
+<a class="" href="https://www.blogger.com/null" src="//5.ggpht.com/-HzpRkbuwU-4/U_G6fsbVaLI/AAAAAAABk5M/cGADXNEAc5k/s1600/2014-08-18_152403%25255B5%25255D.jpg"><img alt="2014-08-18_152403" border="0" height="132" src="//lh3.ggpht.com/-U1oTJ7tsJSU/U_G6g8TebHI/AAAAAAABk5U/qqUKjOkRM3I/2014-08-18_152403_thumb%25255B1%25255D.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152403" width="304" /></a><br />
+在NetBeans中，請進入Team &gt; Git &gt; Clone…<br />
+<a class="" href="https://www.blogger.com/null" src="//4.ggpht.com/-6WfGr3Q-Hzk/U_G6iIfqTmI/AAAAAAABk5c/jLmcpbvNMi4/s1600/2014-08-18_152450%252520-%252520Copy%25255B2%25255D.jpg"><img alt="2014-08-18_152450 - Copy" border="0" height="228" src="//lh4.ggpht.com/-GM15h5z8dfM/U_G6k-CTQKI/AAAAAAABk5k/L2-IWXd44NA/2014-08-18_152450%252520-%252520Copy_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152450 - Copy" width="304" /></a><br />
+接著會開啟Clone Repository對話視窗。在這裡我們先進行Remote Repository設定。要輸入的欄位包括：<br />
+<ul>
+<li><strong>Repository URL</strong>: 請輸入剛剛的HTTPS複製網址「<a href="https://github.com/pulipulichen/php-file-host.git" title="https://github.com/pulipulichen/php-file-host.git">https://github.com/pulipulichen/php-file-host.git</a>」</li>
+<li><strong>User</strong>與<strong>Password</strong>：<a href="https://github.com/login">登入GitHub</a>的身份認證。</li>
+<li><strong>Clone into</strong>：存放專案的目錄。NetBeans會在這個目錄底下再建立一個Git專案的目錄。舉例來說，我的XAMPP網頁擺在「D:\xampp\htdocs」，那麼Git專案就會出現在「<span style="color: red; font-weight: bold; text-decoration: underline;">D:\xampp\htdocs\php-file-host</span>」底下。</li>
+</ul>
+<a class="" href="https://www.blogger.com/null" src="//6.ggpht.com/-SP_LfWUe_3E/U_G6mQFvCFI/AAAAAAABk5s/qmsYTF_NdJs/s1600/2014-08-18_152557%252520-%252520Copy%25255B2%25255D.jpg"><img alt="2014-08-18_152557 - Copy" border="0" height="228" src="//lh3.ggpht.com/-T__i9voTvDU/U_G6n0DuAPI/AAAAAAABk50/23PUEO5vQ8Q/2014-08-18_152557%252520-%252520Copy_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152557 - Copy" width="304" /></a><br />
+接下來選擇要複製的Remote Branches。一般是選擇該專案的代表master分支即可。直接按「Next &gt;」按鈕吧。<br />
+<a class="" href="https://www.blogger.com/null" src="//3.ggpht.com/-TCIHJKUVZNg/U_G6pGfdhRI/AAAAAAABk58/uW7z1kR80L0/s1600/2014-08-18_152609%252520-%252520Copy%25255B2%25255D.jpg"><img alt="2014-08-18_152609 - Copy" border="0" height="222" src="//lh6.ggpht.com/-SDAE0jYxBHs/U_G6r_XNpuI/AAAAAAABk6E/G86gIlaMdro/2014-08-18_152609%252520-%252520Copy_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152609 - Copy" width="304" /></a><br />
+然後最後是確定目標資料夾 Destination Directory。這邊會帶入剛剛的設定，只要按「Finish」按鈕完成即可。<br />
+<a class="" href="https://www.blogger.com/null" src="//3.ggpht.com/-BS0aeTYs5WY/U_G6tFv1PMI/AAAAAAABk6M/PwdYvdWLAE4/s1600/2014-08-18_152634%252520-%252520Copy%25255B2%25255D.jpg"><img alt="2014-08-18_152634 - Copy" border="0" height="143" src="//lh5.ggpht.com/-XBZtbbdLWB8/U_G6unPtC-I/AAAAAAABk6U/-sBw00y7tgc/2014-08-18_152634%252520-%252520Copy_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152634 - Copy" width="304" /></a><br />
+複製完成之後，NetBeans會問你是否要建立NetBeans專案。打勾「Open Sources in Favorites」，然後按下「Create Project…」，接下來就進入新增專案的步驟。<br />
+<h5>
+Part 2. 新增NetBeans專案 / Create NetBeans Project</h5>
+<a class="" href="https://www.blogger.com/null" src="//6.ggpht.com/-PEtngfi2jPE/U_G6wFjA2aI/AAAAAAABk6c/_L4tReOzatA/s1600/2014-08-18_152648%25255B2%25255D.jpg"><img alt="2014-08-18_152648" border="0" height="211" src="//lh6.ggpht.com/-MoMDf98avNg/U_G6yCfAx9I/AAAAAAABk6k/_dlFh2OHzcY/2014-08-18_152648_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152648" width="304" /></a><br />
+NetBeans會顯示「Net Project」對話視窗。在這邊我們要選擇與該專案相對應的程式語言類型。PHP File Host是一個PHP程式語言的專案，而且已經有Git專案過來的檔案，因此我在<span style="color: red; font-weight: bold; text-decoration: underline;">PHP</span>目錄底下選擇專案類型「<span style="color: red; font-weight: bold; text-decoration: underline;">PHP Application with Existing Sources</span>」。<br />
+然後按下「Next &gt;」按鈕進入下一步。<br />
+<a class="" href="https://www.blogger.com/null" src="//5.ggpht.com/-F_cR8eU1FL8/U_G60_JU2QI/AAAAAAABk6s/n3kXgtEYYew/s1600/2014-08-18_152739%25255B5%25255D.jpg"><img alt="2014-08-18_152739" border="0" height="211" src="//lh4.ggpht.com/-6io7HNRebPA/U_G614j7WzI/AAAAAAABk60/ETTsuwitECc/2014-08-18_152739_thumb%25255B1%25255D.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152739" width="304" /></a><br />
+在Name and Location這邊要設定的東西蠻多的。<br />
+首先我們要指定Sources Folder，請設定剛剛跟Git專案複製的目標資料夾路徑「D:\xampp\htdocs\php-file-host」。接著NetBeans會自動帶入下面的資訊。<br />
+接著我們要確認Default Encoding為UTF-8。如果沒有設定NetBeans專案的話，NetBeans會用非UTF-8的編碼來開啟檔案，造成檔案看起來會是亂碼。<br />
+<span style="color: red; font-weight: bold; text-decoration: underline;">然後請打勾「Put NetBeans metadata into a separate directory」，然後指定另一個地方存放NetBeans專案的資訊</span>，不要跟Git專案擺在同一個地方。這是為了避免NetBeans專案資訊被納入Git版本控制之中，這個動作很重要。<br />
+<a class="" href="https://www.blogger.com/null" src="//3.ggpht.com/-87UVOM05XTk/U_G63ih_3SI/AAAAAAABk68/34SsBqrwIEQ/s1600/2014-08-18_152810%25255B2%25255D.jpg"><img alt="2014-08-18_152810" border="0" height="211" src="//lh5.ggpht.com/-ZbuW3Qd4hT4/U_G64z4YGpI/AAAAAAABk7E/qCHHOzjoYMM/2014-08-18_152810_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152810" width="304" /></a><br />
+最後就是運作環境設定 Run Configuration。由於我的專案會先在本機端的XAMPP底下運作測試，所以設定Run As: Local Web Site即可。如果你實際運作的伺服器在遠端，那也可以在此步驟設定遠端伺服器的連線方式。不過遠端伺服器設定比較複雜，在此就先不說明。<br />
+其他沒有特別要設定的地方，按下「Finish」完成。<br />
+<a class="" href="https://www.blogger.com/null" src="//5.ggpht.com/-zU8Dx8mMwmQ/U_G66LVvyYI/AAAAAAABk7M/iTwWVBKjMjc/s1600/2014-08-18_152833%252520-%252520Copy%25255B2%25255D.jpg"><img alt="2014-08-18_152833 - Copy" border="0" height="202" src="//lh6.ggpht.com/-3SgaNMaPgnE/U_G69OYY6sI/AAAAAAABk7U/WlmnMLbbh5Q/2014-08-18_152833%252520-%252520Copy_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_152833 - Copy" width="304" /></a><br />
+NetBeans會顯示剛剛設定的php-file-host專案，複製Git專案的工作就大功告成囉。<br />
+<h4>
+其他的Git操作 / How to use Git in NetBeans</h4>
+當然，除了clone (複製)之外，NetBeans也支援很多Git的操作動作。以下舉例來說常用的指令與其位置：<br />
+<ul>
+<li><strong>commit</strong>: <u>Team &gt; commit</u> ，我還特地設了熱鍵Alt+C，讓自己更方便就能commit <br /><a class="" href="https://www.blogger.com/null" src="//6.ggpht.com/-zDTy34VOYSM/U_HH4XbTm4I/AAAAAAABk7k/cDHM3f0Oric/s1600/2014-08-18_172652%25255B2%25255D.jpg"><img alt="2014-08-18_172652" border="0" height="156" src="//lh6.ggpht.com/-JPLtHGydt0k/U_HH6V8HlPI/AAAAAAABk7s/HBMunag2sIo/2014-08-18_172652_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_172652" width="249" /></a></li>
+<li><strong>Pull &amp; Push</strong>: <u>Team &gt; Remote &gt; Pull or Push</u> <br /><a class="" href="https://www.blogger.com/null" src="//5.ggpht.com/-qpUZj6B-sqY/U_HH8Fyz0WI/AAAAAAABk70/5rXFid95K0Q/s1600/2014-08-18_172709%25255B2%25255D.jpg"><img alt="2014-08-18_172709" border="0" height="304" src="//lh5.ggpht.com/-6hMbZyG4YGY/U_HH9jy1rWI/AAAAAAABk78/poRE0fnyHN4/2014-08-18_172709_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_172709" width="266" /></a></li>
+<li>比較檔案差異 <strong>Diff: </strong><u>Team &gt; Diff &gt; Diff To…</u>&nbsp; (可以取代「<em><a href="http://pulipuli.blogspot.tw/2014/08/git-replace-branch-files-in-git.html">Git取代分支檔案的方法</a></em>」一文中以TortoiseGIT的操作動作) <br /><a class="" href="https://www.blogger.com/null" src="//4.ggpht.com/-whpYkT8N6cs/U_HIAqqghwI/AAAAAAABk8E/E85kJhn6b_o/s1600/2014-08-18_172722%25255B2%25255D.jpg"><img alt="2014-08-18_172722" border="0" height="128" src="//lh6.ggpht.com/-pmYxl3JAJbo/U_HICV7_MpI/AAAAAAABk8M/CWoK0GL3kd8/2014-08-18_172722_thumb.jpg?imgmax=800" style="background-image: none; border-bottom: 0px; border-left: 0px; border-right: 0px; border-top: 0px; display: inline; padding-left: 0px; padding-right: 0px; padding-top: 0px;" title="2014-08-18_172722" width="304" /></a></li>
+</ul>
+Git詳細的說明請參考「<a href="https://netbeans.org/kb/docs/ide/git.html">Using Git Support in NetBeans IDE</a>」一文。我也還在持續摸索中，有任何心得歡迎在下面討論喔。<br />
+<div class="blogger-post-hr">
+<hr />
+</div>
+<span style="font-size: small;"></span>
+
+<h4>
+結語：IDE的重要性 / Conclusion: The Importance of IDE</h4>
+以前常常會聽到有人會以「只要筆記本(notepad)就可以寫網頁」來當作自豪的特技，我覺得這只能說是程式設計師的基本，只能拿來跟外行人炫耀。但是<u>如果要往更進階前進，你就必須學習使用IDE。</u><br />
+就目前為止，我主要使用的IDE有Aptana Studio 2 (第三版是是完全不同的東西)跟NetBeans，在我工作中，這些IDE有幾個我非常仰賴的重要工具：<br />
+<ul>
+<li><strong>全文搜尋(full text search)</strong>：當我要找某個函式要如何使用時，全文搜尋是很重要的。特別是像NetBeans能夠解讀程式碼，可以在你使用函式時顯示對應的註解說明，這個功能在閱讀程式(trace code)是非常好用的輔助工具。</li>
+<li><strong>正規表達式(regular expression)的搜尋與取代</strong>：當要取代換行、找尋某個函式的使用處的時候，正規表達式非常重要。</li>
+<li><strong>自動完成(auto-completion)</strong>：有了語法自動完成，你就不用煩惱每次都為函式或變數少打一個字而帶來的bug。</li>
+<li><strong>程式導航(navigation or outline)</strong>：像是地圖一樣地顯示程式的組成，這在檢視大程式的時候十分有用。</li>
+<li><strong>Git版本控制功能</strong>：一個不做版本控制的專案不僅無法持久發展，也很難跟別人協同開發。</li>
+</ul>
+因此我會建議每一位致力於寫程式的朋友，請務必要熟悉一些好用的IDE。如果你跟我一樣是寫PHP與JavaScript，那我建議你就從<a href="https://netbeans.org/downloads/">NetBeans</a>開始吧。
