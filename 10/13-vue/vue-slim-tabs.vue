@@ -1,31 +1,49 @@
 <template>
   <tabs>
     <tab title="Vue">
-      This is {{ tabName1 }}
+      This is Vue
     </tab>
     <tab title="React">
-      This is {{ tabName2 }}
+      This is React
     </tab>
     <tab title="Svelte">
-      This is {{ tabName3 }}
+      This is Svelte
     </tab>
   </tabs>
 </template>
 
 <script>
 module.exports = {
-  data: () => {
-    return {
-      tabName1: 'Vue',
-      tabName2: 'React',
-      tabName3: 'Svelte'
-    }
-  }
 }
 </script>
 
 <style>
-  .vue-tabs {
-    border: 1px solid gray;
-  }
+.vue-tablist {
+  list-style: none;
+  display: flex;
+  padding-left: 0;
+  border-bottom: 1px solid #e2e2e2;
+}
+
+.vue-tab {
+  padding: 5px 10px;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  border-bottom-color: #e2e2e2;
+  border-radius: 3px 3px 0 0;
+  background-color: white;
+  position: relative;
+  bottom: -1px;
+}
+
+.vue-tab[aria-selected="true"] {
+  border-color: #e2e2e2;
+  border-bottom-color: transparent;
+}
+
+.vue-tab[aria-disabled="true"] {
+  cursor: not-allowed;
+  color: #999;
+}
 </style>
